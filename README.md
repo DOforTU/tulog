@@ -13,6 +13,8 @@ TULOG은 개인 및 팀 블로그를 운영할 수 있는 플랫폼으로, 다�
 
 ### 사용자
 
+![profile_info](https://github.com/DOforTU/tulog/blob/main/img/for_docs/profile_info.png?raw=true)
+
 -   Google OAuth 및 로컬 회원가입/로그인
 -   프로필 수정 (닉네임, 이름, 이미지)
 -   팔로우, 차단, 신고 기능
@@ -27,6 +29,8 @@ TULOG은 개인 및 팀 블로그를 운영할 수 있는 플랫폼으로, 다�
 
 ### 팀
 
+![create_team](https://github.com/DOforTU/tulog/blob/main/img/for_docs/create_team.png?raw=true)
+
 -   팀 생성, 팀원 초대/참여 요청/탈퇴/강퇴
 -   팀장 위임 및 팀 상태 관리
 -   팀 즐겨찾기, 필터링 조회
@@ -40,6 +44,8 @@ TULOG은 개인 및 팀 블로그를 운영할 수 있는 플랫폼으로, 다�
 > -   팀장은 초대만 허용하거나 참여 요청를 허용하는 등 팀의 상태를 설정할 수 있습니다.
 
 ### 블로그
+
+![write_page](https://github.com/DOforTU/tulog/blob/main/img/for_docs/write_page.png?raw=true)
 
 -   마크다운 기반 글 작성, 이미지 업로드
 -   공개/비공개 설정, 임시 저장, 수정/삭제
