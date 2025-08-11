@@ -86,6 +86,132 @@ export class ResponseInterceptor implements NestInterceptor {
 -   Observable 스트림을 활용하고 싶을 때
 -   특정 컨트롤러/메서드에만 적용할 때
 
+## 실제 프로젝트 적용 예시
+
+### 미들웨어 활용 사례
+```typescript
+// 1. 인증 토큰 검증
+export class AuthMiddleware implements NestMiddleware {
+    use(req: Request, res: Response, next: NextFunction) {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            throw new UnauthorizedException('Token not found');
+        }
+        // 토큰 검증 로직
+        next();
+    }
+}
+
+// 2. 요청 제한 (Rate Limiting)
+export class RateLimitMiddleware implements NestMiddleware {
+    private requests = new Map();
+    
+    use(req: Request, res: Response, next: NextFunction) {
+        const ip = req.ip;
+        const requests = this.requests.get(ip) || [];
+        const now = Date.now();
+        
+        // 1분 내 요청 수 확인
+        const recentRequests = requests.filter(time => now - time < 60000);
+        
+        if (recentRequests.length >= 100) {
+            throw new HttpException('Too Many Requests', 429);
+        }
+        
+        this.requests.set(ip, [...recentRequests, now]);
+        next();
+    }
+}
+```
+
+### 인터셉터 활용 사례
+```typescript
+// 1. 캐시 처리
+export class CacheInterceptor implements NestInterceptor {
+    private cache = new Map();
+    
+    intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+        const request = context.switchToHttp().getRequest();
+        const key = `${request.method}_${request.url}`;
+        
+        if (this.cache.has(key)) {
+            return of(this.cache.get(key));
+        }
+        
+        return next.handle().pipe(
+            tap(response => this.cache.set(key, response))
+        );
+    }
+}
+
+// 2. 실행 시간 측정
+export class TimeoutInterceptor implements NestInterceptor {
+    intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+        const startTime = Date.now();
+        
+        return next.handle().pipe(
+            tap(() => {
+                const endTime = Date.now();
+                console.log(`Execution time: ${endTime - startTime}ms`);
+            }),
+            timeout(5000), // 5초 타임아웃
+            catchError(err => {
+                if (err instanceof TimeoutError) {
+                    throw new RequestTimeoutException();
+                }
+                throw err;
+            })
+        );
+    }
+}
+```
+
+## Express.js에서의 차이점
+
+### Express 미들웨어
+```javascript
+// 전역 미들웨어
+app.use(express.json());
+app.use(cors());
+app.use(morgan('combined'));
+
+// 라우트 특정 미들웨어
+const authMiddleware = (req, res, next) => {
+    // 인증 로직
+    if (!req.headers.authorization) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    next();
+};
+
+app.get('/protected', authMiddleware, (req, res) => {
+    res.json({ message: 'Protected data' });
+});
+```
+
+### Express에서 인터셉터 패턴 구현
+```javascript
+// 응답 변환 함수 (인터셉터 역할)
+const responseInterceptor = (req, res, next) => {
+    const originalSend = res.send;
+    
+    res.send = function(data) {
+        // 응답 데이터 변환
+        const wrappedData = {
+            success: true,
+            data: typeof data === 'string' ? JSON.parse(data) : data,
+            timestamp: new Date().toISOString()
+        };
+        
+        originalSend.call(this, JSON.stringify(wrappedData));
+    };
+    
+    next();
+};
+
+app.use(responseInterceptor);
+```
+
 ---
 
 **한 줄 정리**: 미들웨어는 "요청 전처리", 인터셉터는 "응답 후처리"의 역할!
